@@ -64,8 +64,21 @@ export default function DashboardPage() {
   const handleCreateNote = async () => {
     try {
       const response = await noteAPI.quickCreate();
-      setNotes([response.data, ...notes]);
-      setEditingNote(response.data);
+      const newNote = response.data;
+      // Enrich with category color if it has a category
+      if (newNote.category) {
+        const category = categories.find(c => c.id === newNote.category);
+        if (category) {
+          newNote.category_color = category.color;
+          newNote.category_name = category.name;
+          // Update category count
+          setCategories(categories.map(c => 
+            c.id === newNote.category ? { ...c, note_count: c.note_count + 1 } : c
+          ));
+        }
+      }
+      setNotes([newNote, ...notes]);
+      setEditingNote(newNote);
     } catch (error) {
       console.error('Failed to create note:', error);
     }
@@ -73,11 +86,36 @@ export default function DashboardPage() {
 
   const handleUpdateNote = async (updatedNote: Note) => {
     try {
+      const oldNote = notes.find(n => n.id === updatedNote.id);
       await noteAPI.update(updatedNote.id, {
         title: updatedNote.title,
         content: updatedNote.content,
         category: updatedNote.category || undefined,
       });
+
+      // Enrich with category color if it has a category
+      if (updatedNote.category) {
+        const category = categories.find(c => c.id === updatedNote.category);
+        if (category) {
+          updatedNote.category_color = category.color;
+          updatedNote.category_name = category.name;
+        }
+      }
+
+      // Update category counts if category changed
+      let updatedCategories = [...categories];
+      if (oldNote?.category !== updatedNote.category) {
+        updatedCategories = categories.map(c => {
+          if (oldNote?.category === c.id) {
+            return { ...c, note_count: Math.max(0, c.note_count - 1) };
+          }
+          if (updatedNote.category === c.id) {
+            return { ...c, note_count: c.note_count + 1 };
+          }
+          return c;
+        });
+        setCategories(updatedCategories);
+      }
 
       setNotes(notes.map(n => n.id === updatedNote.id ? updatedNote : n));
       setEditingNote(null);
@@ -88,8 +126,15 @@ export default function DashboardPage() {
 
   const handleDeleteNote = async (noteId: number) => {
     try {
+      const noteToDelete = notes.find(n => n.id === noteId);
       await noteAPI.delete(noteId);
       setNotes(notes.filter(n => n.id !== noteId));
+      // Update category count if note had a category
+      if (noteToDelete?.category) {
+        setCategories(categories.map(c => 
+          c.id === noteToDelete.category ? { ...c, note_count: Math.max(0, c.note_count - 1) } : c
+        ));
+      }
       setEditingNote(null);
     } catch (error) {
       console.error('Failed to delete note:', error);
