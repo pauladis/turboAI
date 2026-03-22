@@ -18,7 +18,7 @@ export default function NoteCard({ note, categoryColor, onClick }: NoteCardProps
       style={{ backgroundColor: bgColor }}
       onClick={onClick}
     >
-      <div className="text-xs text-gray-600 mb-2">{formatDate(new Date(note.last_edited))}</div>
+      <div className="text-xs text-gray-600 mb-2">{formatDate(new Date(note.created_at))}</div>
       {note.category_name && (
         <div className="text-xs font-medium text-gray-700 mb-2">{note.category_name}</div>
       )}
