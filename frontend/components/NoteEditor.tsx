@@ -19,7 +19,12 @@ export default function NoteEditor({
   onDelete,
   onClose,
 }: NoteEditorProps) {
-  const [categoryId, setCategoryId] = useState(note.category || '');
+  // Get the first category (Random Thoughts) as default
+  const getDefaultCategory = () => {
+    return note.category || categories[0]?.id || null;
+  };
+
+  const [categoryId, setCategoryId] = useState<number | null>(getDefaultCategory());
   const titleRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isDirty, setIsDirty] = useState(false);
@@ -47,7 +52,7 @@ export default function NoteEditor({
   };
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setCategoryId(e.target.value ? parseInt(e.target.value) : '');
+    setCategoryId(e.target.value ? parseInt(e.target.value) : null);
     setIsDirty(true);
   };
 
@@ -72,8 +77,7 @@ export default function NoteEditor({
   };
 
   const getCategoryColor = () => {
-    if (!categoryId) return '#E8DCC4';
-    const cat = categories.find(c => c.id === parseInt(String(categoryId)));
+    const cat = categories.find(c => c.id === categoryId);
     return cat?.color || '#E8DCC4';
   };
 
@@ -122,11 +126,10 @@ export default function NoteEditor({
         {/* Footer */}
         <div className="flex justify-between items-center pt-4 border-t border-gray-300 space-x-4">
           <select
-            value={categoryId}
+            value={categoryId || ''}
             onChange={handleCategoryChange}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">No Category</option>
             {categories.map(cat => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
