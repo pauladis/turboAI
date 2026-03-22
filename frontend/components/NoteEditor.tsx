@@ -19,22 +19,30 @@ export default function NoteEditor({
   onDelete,
   onClose,
 }: NoteEditorProps) {
-  const [title, setTitle] = useState(note.title);
-  const [content, setContent] = useState(note.content);
   const [categoryId, setCategoryId] = useState(note.category || '');
   const titleRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
-  const handleTitleChange = (e: React.FormEvent<HTMLDivElement>) => {
-    const newTitle = e.currentTarget.textContent || '';
-    setTitle(newTitle);
+  useEffect(() => {
+    // Initialize contentEditable divs with content
+    if (!hasInitialized) {
+      if (titleRef.current) {
+        titleRef.current.textContent = note.title;
+      }
+      if (contentRef.current) {
+        contentRef.current.textContent = note.content;
+      }
+      setHasInitialized(true);
+    }
+  }, [note.id, hasInitialized]);
+
+  const handleTitleChange = () => {
     setIsDirty(true);
   };
 
-  const handleContentChange = (e: React.FormEvent<HTMLDivElement>) => {
-    const newContent = e.currentTarget.textContent || '';
-    setContent(newContent);
+  const handleContentChange = () => {
     setIsDirty(true);
   };
 
@@ -45,6 +53,8 @@ export default function NoteEditor({
 
   const handleSave = () => {
     if (isDirty) {
+      const title = titleRef.current?.textContent || '';
+      const content = contentRef.current?.textContent || '';
       onUpdate({
         ...note,
         title,
@@ -97,9 +107,7 @@ export default function NoteEditor({
             onInput={handleTitleChange}
             className="text-3xl font-bold outline-none editable"
             suppressContentEditableWarning
-          >
-            {title}
-          </div>
+          />
 
           {/* Content */}
           <div
@@ -108,9 +116,7 @@ export default function NoteEditor({
             onInput={handleContentChange}
             className="flex-1 text-base outline-none editable"
             suppressContentEditableWarning
-          >
-            {content}
-          </div>
+          />
         </div>
 
         {/* Footer */}
